@@ -353,20 +353,36 @@ async function runVoyagerAnalytics(httpRequest, liAt, jsessionid) {
 // n8n Code Node Entrypoint Execution
 // ==========================================
 
-// Attempt to resolve input cookies from the incoming n8n node input payload
-const inputItem = typeof $input !== 'undefined' ? $input.first()?.json : {};
+// Check if running within n8n environment context
+if (typeof this !== 'undefined' && this && this.helpers) {
+  // Attempt to resolve input cookies from the incoming n8n node input payload
+  const inputItem = typeof $input !== 'undefined' ? $input.first()?.json : {};
 
-// Fallback inputs: Reads from variables or from $input.
-// In n8n, you can pass parameters from the previous node like:
-// { "li_at": "AQED...", "JSESSIONID": "ajax:..." }
-const liAt = inputItem?.li_at || inputItem?.liAt || '';
-const jsessionid = inputItem?.JSESSIONID || inputItem?.jsessionid || '';
+  // Fallback inputs: Reads from variables or from $input.
+  const liAt = inputItem?.li_at || inputItem?.liAt || '';
+  const jsessionid = inputItem?.JSESSIONID || inputItem?.jsessionid || '';
 
-// Execute and return wrapped inside the array format expected by n8n Code Nodes
-try {
-  const result = await runVoyagerAnalytics(this.helpers.httpRequest, liAt, jsessionid);
-  return [{ json: result }];
-} catch (error) {
-  // Bubbles error to n8n UI with descriptive messages
-  throw new Error(`LinkedIn Voyager Analytics Error: ${error.message}`);
+  // Execute and return wrapped inside the array format expected by n8n Code Nodes
+  try {
+    const result = await runVoyagerAnalytics(this.helpers.httpRequest, liAt, jsessionid);
+    return [{ json: result }];
+  } catch (error) {
+    // Bubbles error to n8n UI with descriptive messages
+    throw new Error(`LinkedIn Voyager Analytics Error: ${error.message}`);
+  }
+} else {
+  // Export functions if running inside standard Node.js (e.g. for local testing/linting)
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      validateCookies,
+      getHeaders,
+      getProfile,
+      getPosts,
+      buildPostRecords,
+      rankPosts,
+      calculateSummary,
+      buildAnalytics,
+      runVoyagerAnalytics
+    };
+  }
 }
