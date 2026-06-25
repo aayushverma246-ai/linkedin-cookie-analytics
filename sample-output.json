@@ -1,0 +1,171 @@
+{
+  "success": true,
+  "profile": {
+    "fullName": "Jane Doe",
+    "occupation": "Senior Developer Advocate at TechCorp",
+    "publicIdentifier": "jane-doe-advocate",
+    "profileUrl": "https://www.linkedin.com/in/jane-doe-advocate"
+  },
+  "analytics": {
+    "postsFound": 3,
+    "totalLikes": 340,
+    "totalComments": 45,
+    "totalShares": 12,
+    "totalImpressions": 8500,
+    "averageLikes": 113.33,
+    "averageComments": 15,
+    "averageShares": 4,
+    "averageImpressions": 2833.33,
+    "averageEngagementRate": 4.67,
+    "highestEngagementPost": {
+      "activityUrn": "urn:li:activity:7123456789012345678",
+      "text": "I am thrilled to announce the open-source release of our new workflow automation tools! 🚀 Check out how it simplifies integrations in minutes.",
+      "postUrl": "https://www.linkedin.com/feed/update/urn:li:activity:7123456789012345678",
+      "postedRelative": "2d",
+      "numLikes": 210,
+      "numComments": 30,
+      "numShares": 8,
+      "numImpressions": 4500,
+      "engagementScore": 248,
+      "engagementRate": 5.51,
+      "reactionBreakdown": [
+        {
+          "reactionType": "LIKE",
+          "count": 180
+        },
+        {
+          "reactionType": "PRAISE",
+          "count": 20
+        },
+        {
+          "reactionType": "APPRECIATION",
+          "count": 10
+        }
+      ],
+      "missingUpdateObject": false,
+      "rank": 1
+    },
+    "highestViewedPost": {
+      "activityUrn": "urn:li:activity:7123456789012345678",
+      "text": "I am thrilled to announce the open-source release of our new workflow automation tools! 🚀 Check out how it simplifies integrations in minutes.",
+      "postUrl": "https://www.linkedin.com/feed/update/urn:li:activity:7123456789012345678",
+      "postedRelative": "2d",
+      "numLikes": 210,
+      "numComments": 30,
+      "numShares": 8,
+      "numImpressions": 4500,
+      "engagementScore": 248,
+      "engagementRate": 5.51,
+      "reactionBreakdown": [
+        {
+          "reactionType": "LIKE",
+          "count": 180
+        },
+        {
+          "reactionType": "PRAISE",
+          "count": 20
+        },
+        {
+          "reactionType": "APPRECIATION",
+          "count": 10
+        }
+      ],
+      "missingUpdateObject": false,
+      "rank": 1
+    },
+    "lowestPerformingPost": {
+      "activityUrn": "urn:li:activity:7123456789012345680",
+      "text": "Quick poll: Do you prefer JavaScript or TypeScript for writing serverless functions?",
+      "postUrl": "https://www.linkedin.com/feed/update/urn:li:activity:7123456789012345680",
+      "postedRelative": "6d",
+      "numLikes": 40,
+      "numComments": 5,
+      "numShares": 1,
+      "numImpressions": 1500,
+      "engagementScore": 46,
+      "engagementRate": 3.07,
+      "reactionBreakdown": [
+        {
+          "reactionType": "LIKE",
+          "count": 40
+        }
+      ],
+      "missingUpdateObject": false,
+      "rank": 3
+    }
+  },
+  "posts": [
+    {
+      "activityUrn": "urn:li:activity:7123456789012345678",
+      "text": "I am thrilled to announce the open-source release of our new workflow automation tools! 🚀 Check out how it simplifies integrations in minutes.",
+      "postUrl": "https://www.linkedin.com/feed/update/urn:li:activity:7123456789012345678",
+      "postedRelative": "2d",
+      "numLikes": 210,
+      "numComments": 30,
+      "numShares": 8,
+      "numImpressions": 4500,
+      "engagementScore": 248,
+      "engagementRate": 5.51,
+      "reactionBreakdown": [
+        {
+          "reactionType": "LIKE",
+          "count": 180
+        },
+        {
+          "reactionType": "PRAISE",
+          "count": 20
+        },
+        {
+          "reactionType": "APPRECIATION",
+          "count": 10
+        }
+      ],
+      "missingUpdateObject": false,
+      "rank": 1
+    },
+    {
+      "activityUrn": "urn:li:activity:7123456789012345679",
+      "text": "Had a fantastic time hosting our weekly engineering roundtable discussion today. We dived deep into caching strategies and optimization patterns.",
+      "postUrl": "https://www.linkedin.com/feed/update/urn:li:activity:7123456789012345679",
+      "postedRelative": "4d",
+      "numLikes": 90,
+      "numComments": 10,
+      "numShares": 3,
+      "numImpressions": 2500,
+      "engagementScore": 103,
+      "engagementRate": 4.12,
+      "reactionBreakdown": [
+        {
+          "reactionType": "LIKE",
+          "count": 80
+        },
+        {
+          "reactionType": "EMPATHY",
+          "count": 10
+        }
+      ],
+      "missingUpdateObject": false,
+      "rank": 2
+    },
+    {
+      "activityUrn": "urn:li:activity:7123456789012345680",
+      "text": "Quick poll: Do you prefer JavaScript or TypeScript for writing serverless functions?",
+      "postUrl": "https://www.linkedin.com/feed/update/urn:li:activity:7123456789012345680",
+      "postedRelative": "6d",
+      "numLikes": 40,
+      "numComments": 5,
+      "numShares": 1,
+      "numImpressions": 1500,
+      "engagementScore": 46,
+      "engagementRate": 3.07,
+      "reactionBreakdown": [
+        {
+          "reactionType": "LIKE",
+          "count": 40
+        }
+      ],
+      "missingUpdateObject": false,
+      "rank": 3
+    }
+  ]
+}

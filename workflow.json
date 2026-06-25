@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "templateId": "linkedin-voyager-analytics"
+  },
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9d90ec38-c8ee-449e-8c44-b0db04b901a1",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "li-at-id",
+              "name": "li_at",
+              "value": "YOUR_LI_AT_COOKIE_HERE",
+              "type": "string"
+            },
+            {
+              "id": "jsessionid-id",
+              "name": "JSESSIONID",
+              "value": "YOUR_JSESSIONID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ef2e9834-f891-4cfb-b5cb-bf07c7c34e8f",
+      "name": "Define Credentials",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * LinkedIn Voyager Analytics for n8n\n * \n * A lightweight utility to fetch authenticated user profile data, recent posts,\n * and calculate detailed engagement metrics using LinkedIn Voyager API and session cookies.\n * \n * @repository linkedin-voyager-analytics\n * @license MIT\n */\n\nfunction validateCookies(liAt, jsessionid) {\n  if (!liAt || typeof liAt !== 'string' || liAt.trim() === '') {\n    throw new Error(\"Missing credentials: 'li_at' cookie is required.\");\n  }\n  if (!jsessionid || typeof jsessionid !== 'string' || jsessionid.trim() === '') {\n    throw new Error(\"Missing credentials: 'JSESSIONID' cookie/CSRF token is required.\");\n  }\n  \n  if (liAt.includes('YOUR_') || jsessionid.includes('YOUR_')) {\n    throw new Error(\"Invalid credentials: Please replace placeholders with your actual LinkedIn session cookies.\");\n  }\n}\n\nfunction getHeaders(liAt, jsessionid) {\n  const cleanJsessionid = jsessionid.replace(/^\"|\"$/g, '');\n  \n  return {\n    'csrf-token': cleanJsessionid,\n    'cookie': `JSESSIONID=\"${cleanJsessionid}\"; li_at=${liAt}`,\n    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',\n    'accept': 'application/vnd.linkedin.normalized+json+2.1',\n    'x-restli-protocol-version': '2.0.0',\n    'x-li-track': JSON.stringify({ clientVersion: '1.13.21', osName: 'web', deviceFormFactor: 'DESKTOP', mpName: 'voyager-web' }),\n  };\n}\n\nasync function getProfile(httpRequest, headers) {\n  let profileResponse;\n  try {\n    profileResponse = await httpRequest({\n      method: 'GET',\n      url: 'https://www.linkedin.com/voyager/api/me',\n      headers,\n    });\n  } catch (error) {\n    if (error.response?.status === 401) {\n      throw new Error('Authentication failed: The provided session cookies are invalid or expired.');\n    }\n    if (error.response?.status === 429) {\n      throw new Error('Rate limited: Too many requests. LinkedIn has throttled the current IP/session.');\n    }\n    throw new Error(`Profile fetch failed: ${error.message}`);\n  }\n\n  const data = profileResponse?.data;\n  if (!data) {\n    throw new Error('Profile fetch failed: Received empty response body from LinkedIn Voyager API.');\n  }\n\n  const miniProfileUrn = data['*miniProfile'];\n  if (!miniProfileUrn) {\n    throw new Error('Voyager response changed: No miniProfile reference (*miniProfile) found in profile payload.');\n  }\n\n  const included = profileResponse.included || [];\n  const miniProfile = included.find(item => item.entityUrn === miniProfileUrn);\n  if (!miniProfile) {\n    throw new Error(`Unexpected schema: No included entity matched miniProfile URN: ${miniProfileUrn}`);\n  }\n\n  const dashUrn = miniProfile.dashEntityUrn;\n  if (!dashUrn) {\n    throw new Error('Unexpected schema: Resolved miniProfile has no dashEntityUrn. Cannot retrieve posts.');\n  }\n\n  return {\n    fullName: `${miniProfile.firstName || ''} ${miniProfile.lastName || ''}`.trim(),\n    occupation: miniProfile.occupation || null,\n    publicIdentifier: miniProfile.publicIdentifier || null,\n    profileUrl: miniProfile.publicIdentifier ? `https://www.linkedin.com/in/${miniProfile.publicIdentifier}` : null,\n    dashUrn,\n  };\n}\n\nasync function getPosts(httpRequest, headers, dashUrn) {\n  try {\n    const postsResponse = await httpRequest({\n      method: 'GET',\n      url: `https://www.linkedin.com/voyager/api/graphql?includeWebMetadata=true&variables=(count:20,start:0,profileUrn:${encodeURIComponent(dashUrn)})&queryId=voyagerFeedDashProfileUpdates.4af00b28d60ed0f1488018948daad822`,\n      headers,\n    });\n    return postsResponse;\n  } catch (error) {\n    throw new Error(`Posts fetch failed: ${error.message}`);\n  }\n}\n\nfunction buildPostRecords(postsResponse) {\n  if (!postsResponse || !postsResponse.included) {\n    return [];\n  }\n\n  const included = postsResponse.included;\n  const countsByActivity = {};\n  for (const item of included) {\n    if (item.$type === 'com.linkedin.voyager.dash.feed.SocialActivityCounts' && item.urn) {\n      countsByActivity[item.urn] = item;\n    }\n  }\n\n  const updatesByActivity = {};\n  for (const item of included) {\n    if (item.$type === 'com.linkedin.voyager.dash.feed.Update' && item.metadata?.backendUrn) {\n      updatesByActivity[item.metadata.backendUrn] = item;\n    }\n  }\n\n  const elementUrns = postsResponse.data?.data?.feedDashProfileUpdatesByMemberShareFeed?.['*elements'] || [];\n  const activityUrns = [...new Set(\n    elementUrns\n      .map(u => u.match(/urn:li:activity:\\d+/))\n      .filter(Boolean)\n      .map(m => m[0])\n  )];\n\n  return activityUrns.map(activityUrn => {\n    const update = updatesByActivity[activityUrn];\n    const counts = countsByActivity[activityUrn];\n\n    const numLikes = counts?.numLikes ?? 0;\n    const numComments = counts?.numComments ?? 0;\n    const numShares = counts?.numShares ?? 0;\n    const numImpressions = counts?.numImpressions ?? 0;\n    const engagementScore = numLikes + numComments + numShares;\n\n    return {\n      activityUrn,\n      text: update?.commentary?.text?.text ?? null,\n      postUrl: update?.socialContent?.shareUrl ?? null,\n      postedRelative: update?.actor?.subDescription?.text?.replace('•', '').trim() ?? null,\n      numLikes,\n      numComments,\n      numShares,\n      numImpressions,\n      engagementScore,\n      engagementRate: numImpressions > 0 ? +(engagementScore / numImpressions * 100).toFixed(2) : 0,\n      reactionBreakdown: counts?.reactionTypeCounts ?? [],\n      missingUpdateObject: !update,\n    };\n  });\n}\n\nfunction rankPosts(postRecords) {\n  postRecords.sort((a, b) => {\n    if (b.engagementScore !== a.engagementScore) {\n      return b.engagementScore - a.engagementScore;\n    }\n    return b.engagementRate - a.engagementRate;\n  });\n\n  postRecords.forEach((post, index) => {\n    post.rank = index + 1;\n  });\n\n  return postRecords;\n}\n\nfunction calculateSummary(postRecords) {\n  const postsFound = postRecords.length;\n\n  if (postsFound === 0) {\n    return {\n      postsFound: 0,\n      totalLikes: 0,\n      totalComments: 0,\n      totalShares: 0,\n      totalImpressions: 0,\n      averageLikes: 0,\n      averageComments: 0,\n      averageShares: 0,\n      averageImpressions: 0,\n      averageEngagementRate: 0,\n      highestEngagementPost: null,\n      highestViewedPost: null,\n      lowestPerformingPost: null,\n    };\n  }\n\n  let totalLikes = 0;\n  let totalComments = 0;\n  let totalShares = 0;\n  let totalImpressions = 0;\n  let sumEngagementRate = 0;\n\n  let highestEngagementPost = postRecords[0];\n  let highestViewedPost = postRecords[0];\n  let lowestPerformingPost = postRecords[0];\n\n  for (const post of postRecords) {\n    totalLikes += post.numLikes;\n    totalComments += post.numComments;\n    totalShares += post.numShares;\n    totalImpressions += post.numImpressions;\n    sumEngagementRate += post.engagementRate;\n\n    const isHigherEngagement = \n      post.engagementScore > highestEngagementPost.engagementScore ||\n      (post.engagementScore === highestEngagementPost.engagementScore && post.engagementRate > highestEngagementPost.engagementRate);\n      \n    if (isHigherEngagement) {\n      highestEngagementPost = post;\n    }\n\n    if (post.numImpressions > highestViewedPost.numImpressions) {\n      highestViewedPost = post;\n    }\n\n    const isLowerPerformance = \n      post.engagementScore < lowestPerformingPost.engagementScore ||\n      (post.engagementScore === lowestPerformingPost.engagementScore && post.engagementRate < lowestPerformingPost.engagementRate);\n      \n    if (isLowerPerformance) {\n      lowestPerformingPost = post;\n    }\n  }\n\n  return {\n    postsFound,\n    totalLikes,\n    totalComments,\n    totalShares,\n    totalImpressions,\n    averageLikes: +(totalLikes / postsFound).toFixed(2),\n    averageComments: +(totalComments / postsFound).toFixed(2),\n    averageShares: +(totalShares / postsFound).toFixed(2),\n    averageImpressions: +(totalImpressions / postsFound).toFixed(2),\n    averageEngagementRate: +(sumEngagementRate / postsFound).toFixed(2),\n    highestEngagementPost,\n    highestViewedPost,\n    lowestPerformingPost,\n  };\n}\n\nfunction buildAnalytics(postsResponse) {\n  const records = buildPostRecords(postsResponse);\n  const rankedRecords = rankPosts(records);\n  const summary = calculateSummary(rankedRecords);\n\n  return {\n    summary,\n    posts: rankedRecords,\n  };\n}\n\nasync function runVoyagerAnalytics(httpRequest, liAt, jsessionid) {\n  validateCookies(liAt, jsessionid);\n  const headers = getHeaders(liAt, jsessionid);\n  const profileInfo = await getProfile(httpRequest, headers);\n  const { dashUrn, ...profileSummary } = profileInfo;\n  const postsResponse = await getPosts(httpRequest, headers, dashUrn);\n  const { summary, posts } = buildAnalytics(postsResponse);\n\n  return {\n    success: true,\n    profile: profileSummary,\n    analytics: summary,\n    posts,\n  };\n}\n\nconst inputItem = typeof $input !== 'undefined' ? $input.first()?.json : {};\nconst liAt = inputItem?.li_at || inputItem?.liAt || '';\nconst jsessionid = inputItem?.JSESSIONID || inputItem?.jsessionid || '';\n\ntry {\n  const result = await runVoyagerAnalytics(this.helpers.httpRequest, liAt, jsessionid);\n  return [{ json: result }];\n} catch (error) {\n  throw new Error(`LinkedIn Voyager Analytics Error: ${error.message}`);\n}"
+      },
+      "id": "e6f42c13-8994-4d89-9800-4b8b5bb5a363",
+      "name": "Voyager Analytics Engine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Define Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Credentials": {
+      "main": [
+        [
+          {
+            "node": "Voyager Analytics Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
