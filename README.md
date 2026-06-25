@@ -1,4 +1,4 @@
-# LinkedIn Voyager Analytics for n8n
+# LinkedIn Cookie Analytics for n8n
 
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![JavaScript](https://img.shields.io/badge/language-JavaScript-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
@@ -131,7 +131,7 @@ See [sample-output.json](sample-output.json) for a complete mock representation 
 ## Repository Structure
 
 ```
-linkedin-voyager-analytics/
+linkedin-cookie-analytics/
 ├── .gitignore          # Git exclusion rules for node_modules, logs, and secrets
 ├── LICENSE             # MIT License details
 ├── CHANGELOG.md        # Log of versioned changes

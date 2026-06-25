@@ -1,10 +1,10 @@
 /**
- * LinkedIn Voyager Analytics for n8n
+ * LinkedIn Cookie Analytics for n8n
  * 
  * A lightweight utility to fetch authenticated user profile data, recent posts,
  * and calculate detailed engagement metrics using LinkedIn Voyager API and session cookies.
  * 
- * @repository linkedin-voyager-analytics
+ * @repository linkedin-cookie-analytics
  * @license MIT
  */
 
@@ -370,7 +370,7 @@ if (typeof this !== 'undefined' && this && this.helpers) {
       return [{ json: result }];
     } catch (error) {
       // Bubbles error to n8n UI with descriptive messages
-      throw new Error(`LinkedIn Voyager Analytics Error: ${error.message}`);
+      throw new Error(`LinkedIn Cookie Analytics Error: ${error.message}`);
     }
   })();
 } else {
